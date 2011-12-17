@@ -109,29 +109,31 @@ CGFloat menuGradent[22] = {0.980392, 0.964706, 0.949020, 0.937255, 0.925490,
     
     CGImageRef capturedImage = CGWindowListCreateImage(
                                    r, kCGWindowListOptionOnScreenBelowWindow, 
-                                                       [invertWindow windowNumber], kCGWindowImageDefault );
+                                                       (uint)[invertWindow windowNumber], kCGWindowImageDefault );
     
     NSBitmapImageRep * bitmapRep = [[NSBitmapImageRep alloc] initWithCGImage:capturedImage];
 
     int i = 0;
-    bool shown = true;
+    bool show = true;
     NSColor * color;
     for ( i = 0; i < 22; i++ )
     {
         color = [bitmapRep colorAtX:0 y:i];
 
-        if ( fabs( menuGradent[ i ] - [color brightnessComponent] ) >= 0.000001 ) {
-            shown = false;
+        // Interestingly, the gradient varies a little after exiting a fullscreen video.
+        // Weird.  Adding a larger margin for error to compensate.
+        if ( fabs( menuGradent[ i ] - [color brightnessComponent] ) >= 0.008 ) {
+            show = false;
             i = 1000; // Exit loop.
         }
     }
 
-    if ( shown && !visible ) {
+    if ( show && !visible ) {
         [hueWindow orderFront:nil];
         [invertWindow orderFront:nil];
         visible = YES;
     }
-    else if ( !shown && visible ) {
+    else if ( !show && visible ) {
         [hueWindow orderOut:nil];
         [invertWindow orderOut:nil];
         visible = NO;
