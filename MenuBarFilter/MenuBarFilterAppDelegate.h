@@ -14,8 +14,6 @@
     MenuBarFilterWindow * invertWindow;
     MenuBarFilterWindow * hueWindow;
     BOOL visible;
-
-    CGFloat menuGradient[22];
 }
 
 - (void) reposition;

@@ -10,14 +10,15 @@
 
 @implementation MenuBarFilterAppDelegate
 
-CGFloat menuGradent[22] = {0.980392, 0.964706, 0.949020, 0.937255, 0.925490,
-                        0.917647, 0.909804, 0.901961, 0.894118, 0.878431, 
-                        0.874510, 0.858824, 0.850980, 0.839216, 0.827451,
-                        0.811765, 0.803922, 0.788235, 0.780392, 0.764706,
-                        0.760784, 0.090196};
+
+
+CGFloat menuGradient[22];
+bool valuesRetrieved = false;
+
+
 
 - (void) applicationDidFinishLaunching:(NSNotification *)notification {
-    
+
     // create invert overlay
     invertWindow = [[MenuBarFilterWindow alloc] init];
     [invertWindow setFilter:@"CIColorInvert"];
@@ -120,11 +121,29 @@ CGFloat menuGradent[22] = {0.980392, 0.964706, 0.949020, 0.937255, 0.925490,
     {
         color = [bitmapRep colorAtX:0 y:i];
 
-        // Interestingly, the gradient varies a little after exiting a fullscreen video.
-        // Weird.  Adding a larger margin for error to compensate.
-        if ( fabs( menuGradent[ i ] - [color brightnessComponent] ) >= 0.008 ) {
-            show = false;
-            i = 1000; // Exit loop.
+        // Okay so this introduces a couple of bugs:
+        //
+        // 1.) If you launch MenuBarFilter while something else is
+        //     fullscreen somehow, then it's going to use those values
+        //     as a baseline, and
+        // 2.) It's going to stop filtering your menubar if you start
+        //     using a different color profile.
+        //
+        // I can't get it to behave with color conversion though, so
+        // please fix this if you can do better.  I'm out of ideas.
+
+        if ( !valuesRetrieved )
+        {
+            menuGradient[ i ] = [color brightnessComponent];
+        }
+        else
+        {
+            // Interestingly, the gradient varies a little after exiting a fullscreen video.
+            // Weird.  Adding a larger margin for error to compensate.
+            if ( fabs( menuGradient[ i ] - [color brightnessComponent] ) >= 0.008 ) {
+                show = false;
+                i = 1000; // Exit loop.
+            }
         }
     }
 
@@ -138,7 +157,12 @@ CGFloat menuGradent[22] = {0.980392, 0.964706, 0.949020, 0.937255, 0.925490,
         [invertWindow orderOut:nil];
         visible = NO;
     }
-    
+
+    if ( !valuesRetrieved )
+    {
+        valuesRetrieved = true;
+    }
+
     [bitmapRep release];
     CGImageRelease( capturedImage );
 }
