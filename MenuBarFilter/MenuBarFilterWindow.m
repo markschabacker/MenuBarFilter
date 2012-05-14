@@ -4,6 +4,7 @@
 //
 //  Created by eece on 24/02/2011.
 //  Copyright 2011 eece. All rights reserved.
+//  Copyright 2012 Wez Furlong
 //
 
 #import "MenuBarFilterWindow.h"
@@ -43,16 +44,10 @@ CGSConnection cid;
         
         [self setLevel:kCGStatusWindowLevel + 1];
         
-//        if ( [self respondsToSelector:@selector(toggleFullScreen:)] ) {
-//            [self setCollectionBehavior:
-//             NSWindowCollectionBehaviorCanJoinAllSpaces |
-//             NSWindowCollectionBehaviorTransient];
-//        }
-//        else {
-            [self setCollectionBehavior:
-             NSWindowCollectionBehaviorCanJoinAllSpaces |
-             NSWindowCollectionBehaviorStationary];
-//        }
+
+        [self setCollectionBehavior:
+            NSWindowCollectionBehaviorCanJoinAllSpaces |
+            NSWindowCollectionBehaviorStationary];
         
         wid = [self windowNumber];
     }

@@ -4,21 +4,25 @@
 //
 //  Created by eece on 24/02/2011.
 //  Copyright 2011 eece. All rights reserved.
+//  Copyright 2012 Wez Furlong
 //
 
 #import "MenuBarFilterAppDelegate.h"
 
 @implementation MenuBarFilterAppDelegate
 
-
-
-CGFloat menuGradient[22];
-bool valuesRetrieved = false;
-
-
+NSString *window_server = @"Window Server";
+NSString *backstop_menubar = @"Backstop Menubar";
 
 - (void) applicationDidFinishLaunching:(NSNotification *)notification {
 
+    statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:22];
+	[statusItem setMenu:statusMenu];
+	[statusItem setHighlightMode:YES];
+	[statusItem setImage:[NSImage imageNamed:@"NocturneMenu"]];
+	[statusItem setAlternateImage:[NSImage imageNamed:@"NocturneMenuPressed"]];
+    [statusItem retain];
+    
     // create invert overlay
     invertWindow = [[MenuBarFilterWindow alloc] init];
     [invertWindow setFilter:@"CIColorInvert"];
@@ -106,46 +110,33 @@ bool valuesRetrieved = false;
 }
 
 - (void) checkForFullscreen {
-    CGRect r = CGRectMake( 0, 0, 1, 22 );
-    
-    CGImageRef capturedImage = CGWindowListCreateImage(
-                                   r, kCGWindowListOptionOnScreenBelowWindow, 
-                                                       (uint)[invertWindow windowNumber], kCGWindowImageDefault );
-    
-    NSBitmapImageRep * bitmapRep = [[NSBitmapImageRep alloc] initWithCGImage:capturedImage];
-
-    int i = 0;
     bool show = true;
-    NSColor * color;
-    for ( i = 0; i < 22; i++ )
-    {
-        color = [bitmapRep colorAtX:0 y:i];
+    
 
-        // Okay so this introduces a couple of bugs:
-        //
-        // 1.) If you launch MenuBarFilter while something else is
-        //     fullscreen somehow, then it's going to use those values
-        //     as a baseline, and
-        // 2.) It's going to stop filtering your menubar if you start
-        //     using a different color profile.
-        //
-        // I can't get it to behave with color conversion though, so
-        // please fix this if you can do better.  I'm out of ideas.
-
-        if ( !valuesRetrieved )
-        {
-            menuGradient[ i ] = [color brightnessComponent];
-        }
-        else
-        {
-            // Interestingly, the gradient varies a little after exiting a fullscreen video.
-            // Weird.  Adding a larger margin for error to compensate.
-            if ( fabs( menuGradient[ i ] - [color brightnessComponent] ) >= 0.008 ) {
-                show = false;
-                i = 1000; // Exit loop.
+        // Look at the windows on this screen; if we can't find the menubar backstop,
+        // we know we're in fullscreen mode
+        
+        CFArrayRef windows = CGWindowListCopyWindowInfo( kCGWindowListOptionOnScreenOnly, kCGNullWindowID );
+        CFIndex i, n;
+        
+        show = false;
+        
+        for (i = 0, n = CFArrayGetCount(windows); i < n; i++) {
+            CFDictionaryRef windict = CFArrayGetValueAtIndex(windows, i);
+            CFStringRef name = CFDictionaryGetValue(windict, kCGWindowOwnerName);
+            
+            if ([window_server compare:(NSString*)name] == 0) {
+                CFRelease(name);
+                
+                name = CFDictionaryGetValue(windict, kCGWindowName);
+                if ([backstop_menubar compare:(NSString*)name] == 0) {
+                    show = true;                    
+                }
+            
             }
+            CFRelease(name);
+            if (show) break;
         }
-    }
 
     if ( show && !visible ) {
         [hueWindow orderFront:nil];
@@ -158,13 +149,7 @@ bool valuesRetrieved = false;
         visible = NO;
     }
 
-    if ( !valuesRetrieved )
-    {
-        valuesRetrieved = true;
-    }
 
-    [bitmapRep release];
-    CGImageRelease( capturedImage );
 }
 
 - (void) checkForAppSwitch {
