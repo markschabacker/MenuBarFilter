@@ -172,18 +172,17 @@ NSString *backstop_menubar = @"Backstop Menubar";
             CFDictionaryRef windict = CFArrayGetValueAtIndex(windows, i);
             CFStringRef name = CFDictionaryGetValue(windict, kCGWindowOwnerName);
             
-            if ([window_server compare:(NSString*)name] == 0) {
-                CFRelease(name);
-                
+            if ([window_server compare:(NSString*)name] == 0) {                
                 name = CFDictionaryGetValue(windict, kCGWindowName);
                 if ([backstop_menubar compare:(NSString*)name] == 0) {
                     show = true;                    
                 }
             
             }
-            CFRelease(name);
             if (show) break;
         }
+    
+    CFRelease(windows);
 
     if ( show && !visible ) {
         [hueWindow orderFront:nil];
